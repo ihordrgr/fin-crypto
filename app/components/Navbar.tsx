@@ -1,4 +1,3 @@
-
 'use client';
 
 import Link from 'next/link';
@@ -23,7 +22,7 @@ export default function Navbar() {
           <Link
             key={href}
             href={href}
-            className={\`\${pathname === href ? 'text-blue-600 font-semibold' : 'text-gray-600 hover:text-blue-500'}\`}
+            className={`${pathname === href ? 'text-blue-600 font-semibold' : 'text-gray-600 hover:text-blue-500'}`}
           >
             {label}
           </Link>
