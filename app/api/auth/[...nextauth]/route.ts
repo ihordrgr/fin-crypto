@@ -1,40 +1,32 @@
-
 import NextAuth from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
-import dbConnect from '@/lib/mongodb';
-import User from '@/models/User';
 import bcrypt from 'bcryptjs';
+import clientPromise from '@/lib/mongodb';
 
 const handler = NextAuth({
   providers: [
     CredentialsProvider({
       name: 'Credentials',
       credentials: {
-        email: { label: 'Email', type: 'text' },
-        password: { label: 'Password', type: 'password' },
+        email: { label: 'Email', type: 'email' },
+        password: { label: 'Пароль', type: 'password' },
       },
       async authorize(credentials) {
-        await dbConnect();
-        const user = await User.findOne({ email: credentials?.email });
+        if (!credentials?.email || !credentials?.password) return null;
+
+        const client = await clientPromise;
+        const db = client.db();
+        const user = await db.collection('users').findOne({ email: credentials.email });
+
         if (!user) return null;
-        const isValid = await bcrypt.compare(credentials!.password, user.password);
+
+        const isValid = await bcrypt.compare(credentials.password, user.password);
         if (!isValid) return null;
-        return { id: user._id.toString(), email: user.email, role: user.role };
+
+        return { id: user._id.toString(), email: user.email };
       },
     }),
   ],
-  callbacks: {
-    async jwt({ token, user }) {
-      if (user) token.role = user.role;
-      return token;
-    },
-    async session({ session, token }) {
-      if (token && session.user) {
-        session.user.role = token.role;
-      }
-      return session;
-    },
-  },
   pages: {
     signIn: '/login',
   },
